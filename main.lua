@@ -2,6 +2,8 @@ require "Deck"
 require "Pyramid"
 require "DummyCard"
 require "Display"
+require "DiscardPile"
+require "Button"
 local push = require "push"
 
 love.graphics.setDefaultFilter("nearest", "nearest")
@@ -15,20 +17,46 @@ push:setupScreen(gameWidth, gameHeight, windowWidth, windowHeight, {pixelperfect
 push:setBorderColor(0, .4, 0)
 
 function love.load()
-    -- make a new deck and pyramid
-    deck = Deck((gameWidth / 2) + 10, (gameHeight - 74))
+    -- make game objects
+    local xOffset = 10
+    local yOffset = 74
+    deck = Deck((gameWidth / 2) + xOffset, (gameHeight - yOffset))
+    discardPile = DiscardPile(deck.x - (CARD_WIDTH + xOffset * 2), deck.y)
     pyramid = fillPyramidRows()
 
-    gameInProgress = true
+    local sheetWidth, sheetHeight = RESET_BUTTON_SPRITE_SHEET:getDimensions()
+    local resetButtonSprites = {
+        down = love.graphics.newQuad(0, 0, 48, 32, sheetWidth, sheetHeight),
+        up = love.graphics.newQuad(48, 0, 48, 32, sheetWidth, sheetHeight)
+    }
+    resetButton = Button((gameWidth - 48), (gameHeight - 32), 48, 32, resetButtonSprites)
+
     selectedCards = {}
 
+    -- make display parameters
+    local displayParams = {
+        deck = deck,
+        pyramid = pyramid,
+        selectedCards = selectedCards,
+        discardPile = discardPile,
+        resetButton = resetButton
+    }
+
     -- create display instance
-    display = Display(deck, pyramid, selectedCards)
+    display = Display(displayParams)
 end
 
-function love.update()
-    if gameInProgress then
-        checkSelectedCards()
+function love.update(dt)
+    local x, y = love.mouse.getPosition()
+
+    if love.mouse.isDown(1) then
+        x, y = push:toGame(x, y)
+
+        if objectClicked(x, y, resetButton.x, resetButton.y, resetButton.width, resetButton.height) then
+            resetButton:pressed()
+        else
+            resetButton:released()
+        end
     end
 end
 
@@ -36,22 +64,22 @@ function love.draw()
     push:start()
     
     display:drawDeck()
+    display:drawDiscardPile()
     display:drawPyramid()
+    display:drawResetButton()
 
     push:finish()
 end
 
 function love.mousereleased(x, y, button)
-    if gameInProgress then
-        if button == 1 then
-            x, y = push:toGame(x, y)
+    if button == 1 then
+        local x, y = push:toGame(x, y)
 
-            -- game window is smaller than actual window, so we must
-            -- account for cases where mouse is clicked out of invisible boundary
-            if x == nil or y == nil then return end
+        -- game window is smaller than actual window, so we must
+        -- account for cases where mouse is clicked out of invisible boundary
+        if x == nil or y == nil then return end
 
-            handleMouseClick(x, y)
-        end
+        handleMouseClick(x, y)
     end
 end
 
@@ -97,12 +125,22 @@ end
 function handleMouseClick(x, y)
     local selection = nil
 
+    -- moves top card of deck to top of discard pile
+    local function transferCard()
+        local card = deck:takeCard()
+        card.location = "discard"
+        card.x = discardPile.x
+        card.y = discardPile.y
+        table.insert(discardPile.cards, card)
+    end
+
     -- check each card in pyramid
     for rowIndex, row in ipairs(pyramid.rows) do
         for cardIndex, card in ipairs(row) do
             if card:is(DummyCard) then goto continue end
 
-            if cardClicked(x, y, card.x, card.y)
+            -- add clicked card to the selected cards
+            if objectClicked(x, y, card.x, card.y, CARD_WIDTH, CARD_HEIGHT)
                 and pyramid:cardCovered(card) == false then
                 selection = card
                 break
@@ -112,17 +150,38 @@ function handleMouseClick(x, y)
         end
     end
 
-    if selection then table.insert(selectedCards, selection) end
+    -- check if discard was clicked
+    if objectClicked(x, y, discardPile.x, discardPile.y, CARD_WIDTH, CARD_HEIGHT)
+        and discardPile:hasCards() then
+            selection = discardPile:getTopCard()
+    end
+
+    -- check if deck was clicked
+    if objectClicked(x, y, deck.x, deck.y, CARD_WIDTH, CARD_HEIGHT)
+        and deck:hasCards() then
+            transferCard()
+    end
+
+    -- check selected cards if there was a selection
+    if selection then 
+        table.insert(selectedCards, selection)
+        checkSelectedCards()
+    end
+
+    -- check if reset button was clicked
+    if objectClicked(x, y, resetButton.x, resetButton.y, resetButton.width, resetButton.height) then
+        love.load()
+    end
 end
 
--- returns true if card was clicked, or false if not
-function cardClicked(mouseX, mouseY, cardX, cardY)
+-- returns true if object was clicked, or false if not
+function objectClicked(mouseX, mouseY, objX, objY, objWidth, objHeight)
     clicked = false
 
-    if mouseX > cardX
-        and mouseX < (cardX + CARD_WIDTH)
-        and mouseY > cardY
-        and mouseY < (cardY + CARD_HEIGHT) then
+    if mouseX > objX
+        and mouseX < (objX + objWidth)
+        and mouseY > objY
+        and mouseY < (objY + objHeight) then
             clicked = true
     end
 
@@ -148,10 +207,9 @@ function checkSelectedCards()
         for cardIndex, card in ipairs(selectedCards) do
             if card.location == "pyramid" then
                 pyramid:removeCard(card)
+            elseif card.location == "discard" then
+                discardPile:takeCard()
             end
-
-            --TO DO: check discard pile
-
         end
 
         emptySelectedCards()

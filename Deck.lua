@@ -11,7 +11,6 @@ function Deck:new(x, y)
 
     self.cards = {}
     self.x, self.y = x, y
-    self.isEmpty = false
     self.sprites = {}
     self.sprites.full = love.graphics.newQuad(0, 256, CARD_WIDTH, CARD_HEIGHT, sheetWidth, sheetHeight)
     self.sprites.empty = love.graphics.newQuad(96, 256, CARD_WIDTH, CARD_HEIGHT, sheetWidth, sheetHeight)
@@ -62,5 +61,18 @@ end
 
 -- removes a card from the top of the deck and returns it
 function Deck:takeCard()
-    return table.remove(self.cards)
+    local card = table.remove(self.cards)
+
+    if #self.cards == 0 then
+        self.sprite = self.sprites["empty"]
+    end
+
+    return card
+end
+
+-- returns true if deck has cards, or false if empty
+function Deck:hasCards()
+    if #self.cards > 0 then return true end
+
+    return false
 end
