@@ -1,6 +1,5 @@
 -- A class for a dummy card. Has no rank or suit and is used
 -- to maintain empty positions in the pyramid
-
 require "Card"
 DummyCard = Card:extend()
 

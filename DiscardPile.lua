@@ -1,8 +1,6 @@
 -- A class for the discard pile.
-
 require "constants"
-Object = require "classic"
-DiscardPile = Object:extend()
+local DiscardPile = Object:extend()
 
 -- initializer method
 function DiscardPile:new(x, y)
@@ -33,3 +31,5 @@ function DiscardPile:getTopCard()
 
     return nil
 end
+
+return DiscardPile

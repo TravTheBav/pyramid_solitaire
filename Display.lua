@@ -1,9 +1,7 @@
 -- A class for the game's display; handles drawing objects to the screen
-
 require "arrayHelpers"
 require "constants"
-Object = require "classic"
-Display = Object:extend()
+local Display = Object:extend()
 
 -- initializer method
 function Display:new(displayParams)
@@ -70,3 +68,5 @@ function Display:drawRedBorder(card)
     love.graphics.setColor(1, 0, 0, 0.5)
     love.graphics.rectangle("line", card.x, card.y, CARD_WIDTH, CARD_HEIGHT)
 end
+
+return Display

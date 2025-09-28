@@ -1,7 +1,5 @@
 -- a class for a generic button
-
-Object = require "classic"
-Button = Object:extend()
+local Button = Object:extend()
 
 -- initializer
 function Button:new(x, y, width, height, sprites)
@@ -20,3 +18,5 @@ end
 function Button:released()
     self.sprite = self.sprites.up
 end
+
+return Button

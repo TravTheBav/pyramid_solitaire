@@ -1,9 +1,9 @@
-require "Deck"
-require "Pyramid"
-require "DummyCard"
-require "Display"
-require "DiscardPile"
-require "Button"
+require "classic"
+local Deck = require "Deck"
+local Pyramid = require "Pyramid"
+local Display = require "Display"
+local DiscardPile = require "DiscardPile"
+local Button = require "Button"
 local push = require "push"
 
 love.graphics.setDefaultFilter("nearest", "nearest")

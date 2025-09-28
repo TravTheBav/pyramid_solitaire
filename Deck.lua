@@ -1,9 +1,8 @@
 -- A class for a deck of Card objects.
 
 require "constants"
-Object = require "classic"
 require "Card"
-Deck = Object:extend()
+local Deck = Object:extend()
 
 -- initializer method
 function Deck:new(x, y)
@@ -76,3 +75,5 @@ function Deck:hasCards()
 
     return false
 end
+
+return Deck

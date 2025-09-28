@@ -4,10 +4,8 @@
     on the last row. Cards in the pyramid may only be selected
     when they are not covered by other cards.
 ]]
-
-Object = require "classic"
 require "DummyCard"
-Pyramid = Object:extend()
+local Pyramid = Object:extend()
 dummyCard = DummyCard(nil, nil)
 
 --[[ 
@@ -90,3 +88,5 @@ function Pyramid:removeCard(card)
     -- update length
     self.length = self.length - 1
 end
+
+return Pyramid
